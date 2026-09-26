@@ -1,0 +1,849 @@
+:root {
+    /* Brand palette — dark "game show" theme */
+    --blue: #38bdf8;
+    --white: #ffffff;
+    --bg: #0f1117;
+
+    /* black represents the door removed by the presenter */
+    --black: #111111;
+
+    --overlay33: #8b5cf6;
+    --overlay66: #f5a623;
+
+    --danger: #ef476f;
+
+    --win: #06d6a0;
+    --loss: #ef476f;
+
+    /* Large A / B / C labels */
+    --third-label: #94a3b8;
+
+    /* Surfaces */
+    --bg-card: #1f2433;
+    --border-subtle: #2b3247;
+    --border-strong: #3b4562;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --gold: #f5a623;
+    --gold-glow: rgba(245, 166, 35, 0.35);
+    --teal-glow: rgba(6, 214, 160, 0.4);
+
+    /* Shared surface tokens */
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    --shadow-panel: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --shadow-raised: 0 4px 14px rgba(0, 0, 0, 0.45);
+
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 16px;
+    --space-lg: 24px;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    font-family: var(--font-sans);
+    margin: 0;
+    height: 100vh;
+    color: var(--text-primary);
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(1100px 550px at 50% -15%, rgba(245, 166, 35, 0.10), transparent 60%),
+        radial-gradient(900px 500px at 50% 115%, rgba(6, 214, 160, 0.07), transparent 60%),
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    overflow-x: hidden;
+}
+
+/* Layout Containers */
+#game-container {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-right: 1px solid var(--border-subtle);
+    background: radial-gradient(circle at 50% 35%, #1a1e2b 0%, transparent 70%);
+}
+
+/* Soft overhead spotlight, sitting behind all stage content */
+#game-container::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    width: 520px;
+    height: 520px;
+    max-width: 90%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+    filter: blur(10px);
+    opacity: 0.6;
+    z-index: -1;
+    pointer-events: none;
+}
+
+#chart-sidebar,
+#sidebar {
+    flex: 1;
+    padding: var(--space-lg);
+    background: linear-gradient(180deg, rgba(22, 25, 35, 0.96) 0%, rgba(15, 17, 23, 0.98) 100%);
+    overflow-y: auto;
+    box-shadow: var(--shadow-panel);
+}
+
+#chart-sidebar {
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Shared heading treatment for both side panels */
+#chart-sidebar h3,
+#sidebar h3 {
+    align-self: flex-start;
+    width: 100%;
+    margin: 0 0 var(--space-md) 0;
+    padding-bottom: var(--space-xs);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+#game-container h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-shadow: 0 2px 10px var(--gold-glow);
+    margin-bottom: var(--space-md);
+    text-align: center;
+}
+
+#chart-sidebar svg {
+    width: min(90%, 420px);
+    height: auto;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+    transition: opacity 0.2s ease;
+}
+
+#chart-caption {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: var(--space-sm);
+    min-height: 3.4em;
+}
+
+/* Container for labels and grid */
+#board-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#grid {
+    display: flex;
+    gap: 18px;
+    position: relative;
+    padding-bottom: 16px;
+}
+
+/* Grounds the doors with a soft contact shadow, like stage floor lighting */
+#grid::after {
+    content: '';
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 0;
+    height: 16px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, transparent 75%);
+    filter: blur(3px);
+    pointer-events: none;
+}
+
+#status {
+    margin-top: var(--space-md);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-height: 1.4em;
+    text-align: center;
+}
+
+/* DOORS instead of plain cells */
+.cell {
+    width: 110px;
+    height: 190px;
+    background:
+        repeating-linear-gradient(100deg, rgba(0, 0, 0, 0.09) 0px, rgba(0, 0, 0, 0.09) 2px, transparent 2px, transparent 7px),
+        linear-gradient(180deg, #8b5a2b 0%, #6b4423 100%);
+    border: 6px solid #4a2f18;
+    border-radius: 8px 8px 4px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 42px;
+    position: relative;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55), inset 0 3px 6px rgba(255, 255, 255, 0.14), inset 0 -20px 28px rgba(0, 0, 0, 0.3);
+    transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Door panel detail */
+.cell::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    border: 3px solid #a9723f;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* Doorknob */
+.cell::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffe9b0, #b8860b 70%);
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Big result emoji (car/goat), kept as the only in-flow child so the
+   cell's flex centering still applies to it and not to the indicators. */
+.door-face {
+    font-size: 42px;
+    line-height: 1;
+}
+
+/* Choice-tracking squares, pinned near the top so they never cover
+   the goat/car emoji centered below them. */
+.choice-indicators {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.choice-box {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.choice-box.filled {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(255, 255, 255, 0.92);
+}
+
+/* Door name, pinned near the bottom so it never collides with the
+   choice-indicator squares up top or the goat/car emoji at center. */
+.door-label {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    pointer-events: none;
+}
+
+.cell:hover:not(.revealed) {
+    filter: brightness(1.1);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 26px rgba(0, 0, 0, 0.7), 0 0 14px var(--gold-glow), inset 0 3px 6px rgba(255, 255, 255, 0.14), inset 0 -20px 28px rgba(0, 0, 0, 0.3);
+}
+
+.cell.revealed {
+    background: #1b1e29;
+    border-color: var(--border-subtle);
+    cursor: default;
+    box-shadow: inset 0 6px 16px rgba(0, 0, 0, 0.6);
+    transform: none;
+}
+
+.cell.revealed::before,
+.cell.revealed::after {
+    display: none;
+}
+
+/* Host-opened door (revealed goat before final choice) */
+.cell.flagged {
+    background: #2a2312;
+    border-color: var(--gold);
+}
+
+/* Losing door (goat) */
+.cell.mine {
+    background-color: #2a1620;
+}
+
+#log-columns {
+    display: flex;
+    gap: 10px;
+}
+
+#sidebar.combined-view #log-columns {
+    display: none;
+}
+
+#log-list-all {
+    display: none;
+}
+
+#sidebar.combined-view #log-list-all {
+    display: block;
+}
+
+.log-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.log-column h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 5px;
+}
+
+.log-entry {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    word-wrap: break-word;
+}
+
+.log-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.log-detail {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* Win/Loss/type as small outlined pill badges */
+.Win,
+.Loss,
+.tag-kept,
+.tag-switched {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.Win {
+    color: var(--win);
+    background: rgba(6, 214, 160, 0.15);
+    border-color: rgba(6, 214, 160, 0.4);
+}
+
+.Loss {
+    color: var(--loss);
+    background: rgba(239, 71, 111, 0.15);
+    border-color: rgba(239, 71, 111, 0.4);
+}
+
+/* Echo the pie chart's colors: kept ties to the ≈33% stay slice,
+   switched ties to the ≈66% switch slice */
+.tag-kept {
+    color: var(--overlay33);
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.tag-switched {
+    color: var(--overlay66);
+    background: rgba(245, 166, 35, 0.15);
+    border-color: rgba(245, 166, 35, 0.4);
+}
+
+/* --- Buttons --- */
+
+button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-top: var(--space-md);
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: #0f1117;
+    letter-spacing: 0.3px;
+    box-shadow: var(--shadow-raised);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* "Ask Monty to open a door" — echoes the chart's 66% gold */
+#monty-btn {
+    background: linear-gradient(180deg, #fbb034 0%, #f59e0b 100%);
+    box-shadow: 0 4px 16px var(--gold-glow);
+}
+
+#monty-btn:hover {
+    background: linear-gradient(180deg, #fcc05d 0%, #e68d03 100%);
+    box-shadow: 0 6px 20px rgba(245, 166, 35, 0.5);
+}
+
+/* "Play Again" — a fresh teal, distinct from the gold "ask Monty" step */
+#play-again-btn {
+    background: linear-gradient(180deg, #06d6a0 0%, #05a57b 100%);
+    box-shadow: 0 4px 16px var(--teal-glow);
+}
+
+#play-again-btn:hover {
+    box-shadow: 0 6px 20px rgba(6, 214, 160, 0.5);
+}
+
+/* Destructive action — outlined, not solid, so it doesn't compete for attention */
+.btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(239, 71, 111, 0.4);
+    margin-top: 0;
+    margin-bottom: var(--space-sm);
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    box-shadow: none;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 71, 111, 0.12);
+    border-color: var(--danger);
+}
+
+/* History header row: layout switch on the left, destructive action on the right */
+.history-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+/* Two-state pill switch (GitHub/GitLab-style) for 1 vs 2 column history */
+.segmented-switch {
+    display: inline-flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.segment {
+    margin: 0;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+
+.segment.active {
+    background: var(--gold);
+    color: #0f1117;
+}
+
+/* Phone-only settings button that opens a menu to swap the right column
+   between the chart and history; hidden until the phone breakpoint below. */
+#mobile-panel-menu-wrap {
+    display: none;
+}
+
+.corner-btn {
+    width: auto;
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-raised);
+}
+
+.corner-btn.active {
+    color: var(--gold);
+    border-color: var(--gold);
+}
+
+/* --- Pie chart specific styles (scoped to #chart-sidebar) --- */
+
+#chart-sidebar .third-label {
+    font-size: 130px;
+    font-weight: 800;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    fill: var(--third-label);
+    opacity: 0.7;
+    paint-order: stroke fill;
+    stroke: var(--white);
+    stroke-width: 6px;
+    stroke-linejoin: round;
+    pointer-events: none;
+    user-select: none;
+}
+
+#chart-sidebar .overlay-label {
+    font-weight: 800;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    paint-order: stroke fill;
+    stroke: var(--white);
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+#chart-sidebar .overlay-label .big {
+    font-size: 38px;
+    stroke-width: 5px;
+}
+
+#chart-sidebar .overlay-label .small {
+    font-size: 22px;
+    stroke-width: 4px;
+}
+
+/* --- Responsive breakpoints --- */
+
+/* Tablet and below: stack the three panels instead of three columns,
+   with the game itself surfaced first so play isn't buried under history. */
+@media (max-width: 1024px) {
+    body {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    #game-container {
+        order: 1;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 20px 0;
+    }
+
+    #chart-sidebar {
+        order: 2;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    #sidebar {
+        order: 3;
+    }
+
+    #chart-sidebar,
+    #sidebar {
+        flex: none;
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+/* Small phones: shrink the doors, chart, and text so nothing overflows. */
+@media (max-width: 600px) {
+    .cell {
+        width: 80px;
+        height: 140px;
+        font-size: 32px;
+    }
+
+    .door-face {
+        font-size: 32px;
+    }
+
+    .choice-indicators {
+        top: 10px;
+        gap: 4px;
+    }
+
+    .choice-box {
+        width: 17px;
+        height: 17px;
+        font-size: 11px;
+        border-radius: 4px;
+    }
+
+    .door-label {
+        bottom: 6px;
+        font-size: 9px;
+    }
+
+    #grid {
+        gap: 10px;
+    }
+
+    #game-container h2 {
+        font-size: 1.3rem;
+        text-align: center;
+        padding: 0 10px;
+    }
+
+    #chart-sidebar svg {
+        width: min(95%, 320px);
+    }
+
+    #chart-sidebar .third-label {
+        font-size: 90px;
+    }
+
+    #chart-sidebar .overlay-label .big {
+        font-size: 28px;
+    }
+
+    #chart-sidebar .overlay-label .small {
+        font-size: 16px;
+    }
+
+    #log-columns {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    /* Single settings button (top-right) opens a menu to swap the
+       right column between chart and history */
+    #mobile-panel-menu-wrap {
+        display: block;
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 25;
+    }
+
+    #mobile-panel-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        min-width: 190px;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-raised);
+        overflow: hidden;
+    }
+
+    #mobile-panel-menu[hidden] {
+        display: none;
+    }
+
+    .menu-item {
+        width: 100%;
+        margin: 0;
+        padding: 10px 14px;
+        border-radius: 0;
+        background: transparent;
+        color: var(--text-secondary);
+        box-shadow: none;
+        text-align: left;
+        font-size: 0.82rem;
+    }
+
+    .menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .menu-item.active {
+        color: var(--gold);
+    }
+
+    /* Condensed history entries: id + result only, until hover/long-press */
+    .log-entry {
+        position: relative;
+    }
+
+    .log-detail {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        margin-top: 4px;
+        padding: 8px 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-raised);
+        z-index: 30;
+    }
+
+    .log-entry:hover .log-detail,
+    .log-entry.show-detail .log-detail {
+        display: block;
+    }
+
+    /* --- Split view: doors on the left, chart or history on the right --- */
+    body.panel-chart-active,
+    body.panel-history-active {
+        flex-direction: row;
+        height: 100vh;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    body.panel-chart-active #game-container,
+    body.panel-history-active #game-container {
+        order: 1;
+        flex: 1.1;
+        width: auto;
+        height: 100vh;
+        border-right: 1px solid var(--border-subtle);
+        border-bottom: none;
+        padding: 46px 4px 10px;
+        overflow-y: auto;
+    }
+
+    body.panel-chart-active #chart-sidebar,
+    body.panel-history-active #sidebar {
+        display: flex;
+        flex-direction: column;
+        order: 2;
+        flex: 1;
+        width: auto;
+        height: 100vh;
+        padding: 46px 8px 10px;
+    }
+
+    body.panel-chart-active #sidebar,
+    body.panel-history-active #chart-sidebar {
+        display: none;
+    }
+
+    /* Doors stack in a single narrow column instead of a row */
+    body.panel-chart-active #grid,
+    body.panel-history-active #grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
+    body.panel-chart-active .cell,
+    body.panel-history-active .cell {
+        width: 64px;
+        height: 108px;
+        font-size: 22px;
+    }
+
+    body.panel-chart-active .door-face,
+    body.panel-history-active .door-face {
+        font-size: 22px;
+    }
+
+    body.panel-chart-active .choice-indicators,
+    body.panel-history-active .choice-indicators {
+        top: 6px;
+        gap: 3px;
+    }
+
+    body.panel-chart-active .choice-box,
+    body.panel-history-active .choice-box {
+        width: 12px;
+        height: 12px;
+        font-size: 8px;
+        border-radius: 3px;
+    }
+
+    body.panel-chart-active .door-label,
+    body.panel-history-active .door-label {
+        bottom: 4px;
+        font-size: 8px;
+    }
+
+    body.panel-chart-active #game-container h2,
+    body.panel-history-active #game-container h2 {
+        font-size: 0.95rem;
+        padding: 0;
+        margin-bottom: 6px;
+    }
+
+    body.panel-chart-active #status,
+    body.panel-history-active #status {
+        font-size: 0.78rem;
+        margin-top: 8px;
+    }
+
+    body.panel-chart-active #game-container button,
+    body.panel-history-active #game-container button,
+    body.panel-chart-active #sidebar button,
+    body.panel-history-active #sidebar button {
+        width: 100%;
+        font-size: 0.72rem;
+        padding: 6px 8px;
+        margin-top: 8px;
+    }
+}

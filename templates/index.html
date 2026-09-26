@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monty Hall Problem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Phone-only: one settings button opens a menu to swap the right column -->
+    <div id="mobile-panel-menu-wrap">
+        <button type="button" class="corner-btn" id="mobile-panel-menu-btn" onclick="toggleMobileMenu()"
+            aria-haspopup="true" aria-expanded="false" aria-label="View options">⚙️</button>
+        <div id="mobile-panel-menu" hidden>
+            <button type="button" class="menu-item" id="menu-item-chart" onclick="selectMobilePanel('chart')">📊 Probability Breakdown</button>
+            <button type="button" class="menu-item" id="menu-item-history" onclick="selectMobilePanel('history')">🕓 Game History</button>
+        </div>
+    </div>
+
+    <div id="chart-sidebar">
+        <h3>Probability Breakdown</h3>
+
+        <svg id="chart-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- base -->
+            <circle cx="250" cy="250" r="200" fill="var(--white)" />
+
+            <!-- 33% / 66% solid color fills -->
+            <g id="chart-overlays"></g>
+
+            <!-- A / B / C, drawn over the fills so they stay legible -->
+            <g id="chart-letters"></g>
+
+            <!-- host-removed door — drawn last so it visibly cuts into the overlay,
+                 outlined (not tinted) in the 66% color so it stays visibly black -->
+            <g id="chart-black"></g>
+
+            <!-- percentage text, on top of everything -->
+            <g id="chart-percent-labels"></g>
+
+            <!-- radial divider lines -->
+            <g id="chart-dividers"></g>
+
+            <!-- outer ring, always on top -->
+            <circle cx="250" cy="250" r="200" fill="none" stroke="var(--blue)" stroke-width="8"
+                stroke-linecap="round" />
+        </svg>
+
+        <p id="chart-caption">Three doors, three equal chances. Pick one to see how the odds move.</p>
+    </div>
+
+    <div id="game-container">
+        <h2>The Monty Hall Problem</h2>
+
+        <div id="board-wrapper">
+            <div id="grid"></div>
+        </div>
+
+        <div id="status" style="margin-top: 20px;">Pick a door!</div>
+        <button id="monty-btn" onclick="hostOpensDoor()" style="display: none;">Ask Monty to open a door</button>
+        <button id="play-again-btn" onclick="initGame()" style="display: none;">Play Again</button>
+    </div>
+
+    <div id="sidebar">
+        <h3>Game History</h3>
+        <div class="history-actions">
+            <div class="segmented-switch" role="tablist" aria-label="History layout">
+                <button type="button" class="segment" id="seg-one-column" onclick="setHistoryView('combined')">1 Column</button>
+                <button type="button" class="segment" id="seg-two-column" onclick="setHistoryView('split')">2 Columns</button>
+            </div>
+            <button class="btn-danger" onclick="deleteHistory()">
+                Clear All History
+            </button>
+        </div>
+        <div id="log-columns">
+            <div class="log-column">
+                <h4>Kept Choice</h4>
+                <div id="log-list-kept">
+                    {% for game in kept_history %}
+                    <div class="log-entry">
+                        <div class="log-summary">
+                            <strong>#{{ game[0] }}</strong>
+                            <span class="{{ game[1] }}">{{ game[1] }}</span>
+                        </div>
+                        <div class="log-detail">{{ game[2][:19] }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="log-column">
+                <h4>Switched Choice</h4>
+                <div id="log-list-switched">
+                    {% for game in switched_history %}
+                    <div class="log-entry">
+                        <div class="log-summary">
+                            <strong>#{{ game[0] }}</strong>
+                            <span class="{{ game[1] }}">{{ game[1] }}</span>
+                        </div>
+                        <div class="log-detail">{{ game[2][:19] }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div id="log-list-all">
+            {% for game in all_history %}
+            <div class="log-entry">
+                <div class="log-summary">
+                    <strong>#{{ game[0] }}</strong>
+                    <span class="{{ game[1] }}">{{ game[1] }}</span>
+                </div>
+                <div class="log-detail">
+                    <span class="{{ 'tag-switched' if game[3] else 'tag-kept' }}">{{ 'Switched' if game[3] else 'Kept' }}</span>
+                    — {{ game[2][:19] }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>

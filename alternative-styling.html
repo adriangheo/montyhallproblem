@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Monty Hall Showdown</title>
+    <style>
+        :root {
+            /* Theme Foundation */
+            --bg-canvas: #0f1117;
+            --bg-panel: #161923;
+            --bg-card: #1f2433;
+            --border-subtle: #2b3247;
+            --border-highlight: #3b4562;
+
+            /* Accent Colors */
+            --gold: #f5a623;
+            --gold-glow: rgba(245, 166, 35, 0.35);
+            --neon-teal: #06d6a0;
+            --teal-glow: rgba(6, 214, 160, 0.4);
+            --danger-red: #ef476f;
+            --danger-glow: rgba(239, 71, 111, 0.35);
+            
+            /* Text & Typography */
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            /* Visualizer Chart Constants */
+            --chart-blue: #38bdf8;
+            --chart-white: #f8fafc;
+            --chart-black: #0f172a;
+            --chart-purple: #8b5cf6;
+            --chart-orange: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2b3247;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3e4866;
+        }
+
+        /* --- LEFT SIDEBAR (Chart & Math) --- */
+        #left-sidebar {
+            flex: 1.25;
+            padding: 24px 20px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .panel-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .chart-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        #dynamic-svg {
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+        }
+
+        .third-label {
+            font-size: 82px;
+            font-weight: 900;
+            text-anchor: middle;
+            dominant-baseline: central;
+            fill: #94a3b8;
+            opacity: 0.45;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .overlay-label {
+            font-weight: 900;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+        }
+
+        .overlay-label .big {
+            font-size: 26px;
+        }
+
+        .overlay-label .small {
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .chart-desc {
+            margin-top: 20px;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 16px;
+            width: 100%;
+        }
+
+        .chart-desc strong {
+            color: var(--gold);
+        }
+
+        /* --- CENTER STAGE --- */
+        #game-container {
+            flex: 2.3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 30px;
+            background: radial-gradient(circle at 50% 35%, #232a3e 0%, var(--bg-canvas) 75%);
+        }
+
+        .stage-title {
+            margin: 0;
+            font-size: 2.1rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--gold);
+            text-shadow: 0 2px 10px var(--gold-glow);
+        }
+
+        .stage-subtitle {
+            margin: 6px 0 24px 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        #board-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        #labels,
+        #grid {
+            display: flex;
+            gap: 24px;
+        }
+
+        .label {
+            width: 110px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* --- REALISTIC DOOR STYLING --- */
+        .door {
+            position: relative;
+            width: 110px;
+            height: 190px;
+            background: linear-gradient(180deg, #8a481c 0%, #542b10 100%);
+            border: 5px solid #361a07;
+            border-radius: 12px 12px 2px 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.15);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s;
+            user-select: none;
+        }
+
+        /* Door Recessed Bevel Inset */
+        .door::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            bottom: 10px;
+            left: 8px;
+            right: 8px;
+            border: 2px solid rgba(0, 0, 0, 0.35);
+            border-top-color: rgba(255, 255, 255, 0.12);
+            border-bottom-color: rgba(0, 0, 0, 0.6);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        /* Brass Door Handle */
+        .door::after {
+            content: '';
+            position: absolute;
+            right: 12px;
+            top: 52%;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffeaa7, #b8860b);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+        }
+
+        .door:hover:not(.revealed):not(.disabled) {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 16px 28px rgba(0, 0, 0, 0.8), 0 0 12px var(--gold-glow);
+            border-color: #5c2f0f;
+        }
+
+        .door.disabled {
+            cursor: default;
+        }
+
+        /* Selected State */
+        .door.selected {
+            border-color: var(--neon-teal);
+            box-shadow: 0 0 20px var(--teal-glow), 0 10px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Revealed States */
+        .door.revealed {
+            background: #151822;
+            border-color: #2e3549;
+            box-shadow: inset 0 6px 18px rgba(0, 0, 0, 0.85);
+            cursor: default;
+        }
+
+        .door.revealed::before,
+        .door.revealed::after {
+            display: none;
+        }
+
+        .door.goat {
+            background: radial-gradient(circle, #2d3345 0%, #151822 80%);
+            border-color: var(--danger-red);
+            box-shadow: inset 0 0 20px rgba(239, 71, 111, 0.3);
+        }
+
+        .door.car {
+            background: radial-gradient(circle, #1a4235 0%, #0d261e 80%);
+            border-color: var(--neon-teal);
+            box-shadow: inset 0 0 25px rgba(6, 214, 160, 0.35);
+        }
+
+        /* Status & Buttons */
+        #status {
+            font-size: 1.15rem;
+            min-height: 56px;
+            max-width: 540px;
+            text-align: center;
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin-top: 26px;
+        }
+
+        #status strong {
+            color: var(--gold);
+        }
+
+        .btn {
+            padding: 12px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
+        }
+
+        #action-btn {
+            margin-top: 10px;
+            background: linear-gradient(180deg, #fbb034 0%, #f59e0b 100%);
+            color: #0f1117;
+            box-shadow: 0 4px 16px var(--gold-glow);
+        }
+
+        #action-btn:hover {
+            background: linear-gradient(180deg, #fcc05d 0%, #e68d03 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 166, 35, 0.5);
+        }
+
+        #action-btn.secondary {
+            background: linear-gradient(180deg, #06d6a0 0%, #05a57b 100%);
+            color: #0f1117;
+            box-shadow: 0 4px 16px var(--teal-glow);
+        }
+
+        #action-btn.secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 214, 160, 0.5);
+        }
+
+        /* --- RIGHT SIDEBAR (Log History) --- */
+        #sidebar {
+            flex: 1;
+            padding: 24px 20px;
+            background-color: var(--bg-panel);
+            border-left: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--danger-red);
+            border: 1px solid rgba(239, 71, 111, 0.4);
+            padding: 7px 12px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: background 0.2s ease, border-color 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(239, 71, 111, 0.12);
+            border-color: var(--danger-red);
+        }
+
+        #log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .log-entry {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .log-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .log-id {
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.Win {
+            background: rgba(6, 214, 160, 0.15);
+            color: var(--neon-teal);
+            border: 1px solid rgba(6, 214, 160, 0.4);
+        }
+
+        .badge.Loss {
+            background: rgba(239, 71, 111, 0.15);
+            color: var(--danger-red);
+            border: 1px solid rgba(239, 71, 111, 0.4);
+        }
+
+        .log-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Left Sidebar: Dynamic SVG Probability Wheel -->
+    <div id="left-sidebar">
+        <div class="panel-header">
+            <h3>Probability Model</h3>
+        </div>
+
+        <div class="chart-container">
+            <svg id="dynamic-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="pattern-33" patternUnits="userSpaceOnUse" width="14" height="9">
+                        <line x1="0" y1="4.5" x2="14" y2="4.5" stroke="var(--chart-purple)" stroke-width="1.3" stroke-dasharray="4 3" stroke-linecap="round" />
+                    </pattern>
+                    <pattern id="pattern-66" patternUnits="userSpaceOnUse" width="14" height="9">
+                        <line x1="0" y1="4.5" x2="14" y2="4.5" stroke="var(--chart-orange)" stroke-width="1.3" stroke-dasharray="4 3" stroke-linecap="round" />
+                    </pattern>
+                </defs>
+                <g id="chart-content"></g>
+            </svg>
+        </div>
+
+        <div class="chart-desc" id="chart-explanation">
+            <strong>Stage 1: Equal Chances</strong><br>
+            Each door has an equal 1/3 (≈33.3%) chance of concealing the sports car.
+        </div>
+    </div>
+
+    <!-- Center: Monty Hall Game -->
+    <div id="game-container">
+        <h1 class="stage-title">The Monty Hall Show</h1>
+        <p class="stage-subtitle">Behind one door is a sports car. Behind the others are goats!</p>
+
+        <div id="board-wrapper">
+            <div id="labels">
+                <div class="label">Door A</div>
+                <div class="label">Door B</div>
+                <div class="label">Door C</div>
+            </div>
+            <div id="grid"></div>
+        </div>
+
+        <div id="status">Pick a door to place your initial bet!</div>
+        
+        <button id="action-btn" class="btn" onclick="handleActionClick()" style="display: none;"></button>
+    </div>
+
+    <!-- Right Sidebar: History Logs -->
+    <div id="sidebar">
+        <div class="panel-header">
+            <h3>Game History</h3>
+        </div>
+        <button class="clear-btn" onclick="deleteHistory()">Clear History</button>
+        <div id="log-list">
+            {% for game in history %}
+            <div class="log-entry">
+                <div class="log-top-row">
+                    <span class="log-id">#{{ game[0] }}</span>
+                    <span class="badge {{ game[1] }}">{{ game[1] }}</span>
+                </div>
+                <div>{{ game[2][:19] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        const width = 3;
+        const totalGoats = 2;
+        let goatPositions = [];
+        let gameOver;
+
+        let currentStep = 'init'; // 'init' | 'picked' | 'revealed' | 'end'
+        let initialChoice = null;
+        let switchedMind = false;
+        let boardLayout = [];
+        let hostRemovedIndex = null;
+
+        // --- MATH & SVG HELPER FUNCTIONS ---
+        const CX = 250, CY = 250, R = 195;
+        const doorAngles = [
+            { start: -30, end: 90, mid: 30, letter: 'A' },   // Door A
+            { start: 90, end: 210, mid: 150, letter: 'B' },  // Door B
+            { start: 210, end: 330, mid: 270, letter: 'C' }  // Door C
+        ];
+
+        function polarToCartesian(cx, cy, r, angleInDegrees) {
+            const rad = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: cx + (r * Math.cos(rad)),
+                y: cy + (r * Math.sin(rad))
+            };
+        }
+
+        function describeArcSlice(cx, cy, r, startAngle, endAngle) {
+            const start = polarToCartesian(cx, cy, r, endAngle);
+            const end = polarToCartesian(cx, cy, r, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
+        }
+
+        // --- DYNAMIC CHART RENDERER ---
+        function updateChart(stage) {
+            const g = document.getElementById('chart-content');
+            const explanation = document.getElementById('chart-explanation');
+            g.innerHTML = '';
+
+            const baseCircle = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="var(--chart-white)" />`;
+            let elements = baseCircle;
+
+            if (stage === 'init') {
+                doorAngles.forEach((d) => {
+                    const path = describeArcSlice(CX, CY, R, d.start, d.end);
+                    const labelPt = polarToCartesian(CX, CY, R * 0.55, d.mid);
+                    const pctPt = polarToCartesian(CX, CY, R * 0.82, d.mid);
+
+                    elements += `
+                        <path d="${path}" fill="#f8fafc" stroke="none" />
+                        <text x="${labelPt.x}" y="${labelPt.y}" class="third-label">${d.letter}</text>
+                        <text x="${pctPt.x}" y="${pctPt.y}" fill="#64748b" font-weight="bold" font-size="16" text-anchor="middle" dominant-baseline="central">33.3%</text>
+                    `;
+                });
+
+                doorAngles.forEach(d => {
+                    const pt = polarToCartesian(CX, CY, R, d.start);
+                    elements += `<line x1="${CX}" y1="${CY}" x2="${pt.x}" y2="${pt.y}" stroke="var(--chart-blue)" stroke-width="5" stroke-linecap="round" />`;
+                });
+
+                explanation.innerHTML = `<strong>Stage 1: Equal Chances</strong><br>Every door starts with an identical 1/3 (≈33.3%) chance of holding the car.`;
+
+            } else if (stage === 'picked' || stage === 'revealed' || stage === 'end') {
+                const userDoor = doorAngles[initialChoice];
+                const otherDoors = [0, 1, 2].filter(i => i !== initialChoice);
+
+                const startCombined = doorAngles[otherDoors[0]].start;
+                const endCombined = startCombined + 240;
+
+                const path33 = describeArcSlice(CX, CY, R, userDoor.start, userDoor.end);
+                const path66 = describeArcSlice(CX, CY, R, startCombined, endCombined);
+
+                // 66% slice
+                elements += `<path d="${path66}" fill="url(#pattern-66)" opacity="0.95" />`;
+
+                // Black out the goat door if revealed
+                if (stage === 'revealed' || stage === 'end') {
+                    const goatDoor = doorAngles[hostRemovedIndex];
+                    const pathGoat = describeArcSlice(CX, CY, R - 6, goatDoor.start + 2, goatDoor.end - 2);
+                    elements += `<path d="${pathGoat}" fill="var(--chart-black)" />`;
+                }
+
+                // 33% slice
+                elements += `<path d="${path33}" fill="url(#pattern-33)" opacity="0.95" />`;
+
+                // Letters A, B, C
+                doorAngles.forEach(d => {
+                    const labelPt = polarToCartesian(CX, CY, R * 0.55, d.mid);
+                    elements += `<text x="${labelPt.x}" y="${labelPt.y}" class="third-label">${d.letter}</text>`;
+                });
+
+                const userLabelPt = polarToCartesian(CX, CY, R * 0.45, userDoor.mid);
+                elements += `
+                    <text x="${userLabelPt.x}" y="${userLabelPt.y}" fill="var(--chart-purple)" class="overlay-label">
+                        <tspan class="big" x="${userLabelPt.x}" dy="0">≈33%</tspan>
+                        <tspan class="small" x="${userLabelPt.x}" dy="22">chosen</tspan>
+                    </text>
+                `;
+
+                const midAngle66 = (startCombined + 120) % 360;
+                const combinedLabelPt = polarToCartesian(CX, CY, R * 0.5, midAngle66);
+
+                if (stage === 'picked') {
+                    elements += `
+                        <text x="${combinedLabelPt.x}" y="${combinedLabelPt.y}" fill="var(--chart-orange)" class="overlay-label">
+                            <tspan class="big" x="${combinedLabelPt.x}" dy="0">≈66%</tspan>
+                            <tspan class="small" x="${combinedLabelPt.x}" dy="22">remaining</tspan>
+                        </text>
+                    `;
+                    explanation.innerHTML = `<strong>Stage 2: The Two-Way Split</strong><br>Your picked Door (${userDoor.letter}) holds <strong>33%</strong>. The other two doors combined represent a <strong>66%</strong> pool.`;
+                } else {
+                    const unchosenRemaining = otherDoors.find(idx => idx !== hostRemovedIndex);
+                    const remainingDoorObj = doorAngles[unchosenRemaining];
+                    const transferPt = polarToCartesian(CX, CY, R * 0.5, remainingDoorObj.mid);
+
+                    elements += `
+                        <text x="${transferPt.x}" y="${transferPt.y}" fill="var(--chart-orange)" class="overlay-label">
+                            <tspan class="big" x="${transferPt.x}" dy="0">≈66%</tspan>
+                            <tspan class="small" x="${transferPt.x}" dy="22">transfer</tspan>
+                        </text>
+                    `;
+                    explanation.innerHTML = `<strong>Stage 3: Goat Eliminated</strong><br>Door ${doorAngles[hostRemovedIndex].letter} is blacked out (0%). The entire <strong>66% chance collapses into Door ${remainingDoorObj.letter}</strong>!`;
+                }
+
+                // Dividing lines
+                const div1 = polarToCartesian(CX, CY, R, userDoor.start);
+                const div2 = polarToCartesian(CX, CY, R, userDoor.end);
+                elements += `
+                    <line x1="${CX}" y1="${CY}" x2="${div1.x}" y2="${div1.y}" stroke="var(--chart-blue)" stroke-width="7" stroke-linecap="round" />
+                    <line x1="${CX}" y1="${CY}" x2="${div2.x}" y2="${div2.y}" stroke="var(--chart-blue)" stroke-width="7" stroke-linecap="round" />
+                `;
+            }
+
+            elements += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--chart-blue)" stroke-width="7" />`;
+            g.innerHTML = elements;
+        }
+
+        // --- GAME CONTROLLER ---
+        function initGame() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            document.getElementById('status').innerHTML = "Pick a door to place your initial bet!";
+
+            const btn = document.getElementById('action-btn');
+            btn.style.display = 'none';
+            btn.className = 'btn';
+
+            goatPositions = [];
+            while (goatPositions.length < totalGoats) {
+                let r = Math.floor(Math.random() * width);
+                if (!goatPositions.includes(r)) {
+                    goatPositions.push(r);
+                }
+            }
+
+            boardLayout = [0, 1, 2].map(i => goatPositions.includes(i) ? "Goat" : "Car");
+
+            currentStep = 'init';
+            initialChoice = null;
+            switchedMind = false;
+            gameOver = false;
+            hostRemovedIndex = null;
+
+            for (let i = 0; i < width; i++) {
+                const door = document.createElement('div');
+                door.classList.add('door');
+                door.addEventListener('click', () => handleDoorClick(door, i));
+                gridElement.appendChild(door);
+            }
+
+            updateChart('init');
+        }
+
+        function handleDoorClick(door, index) {
+            if (gameOver) return;
+
+            if (currentStep === 'init') {
+                initialChoice = index;
+                door.classList.add('selected');
+                door.innerText = '🎯';
+
+                if (goatPositions.includes(index)) {
+                    hostRemovedIndex = goatPositions.find(pos => pos !== index);
+                } else {
+                    const randomIdx = Math.floor(Math.random() * goatPositions.length);
+                    hostRemovedIndex = goatPositions[randomIdx];
+                }
+
+                currentStep = 'picked';
+                updateChart('picked');
+
+                document.querySelectorAll('.door').forEach(d => d.classList.add('disabled'));
+
+                document.getElementById('status').innerHTML = 
+                    `You selected <strong>Door ${doorAngles[index].letter}</strong>. Check the chart to see the 33% vs 66% grouping!`;
+
+                const btn = document.getElementById('action-btn');
+                btn.innerText = "Ask Monty to open a door →";
+                btn.style.display = 'inline-block';
+            } 
+            else if (currentStep === 'revealed') {
+                if (index === hostRemovedIndex) return;
+                finalizeGame(index);
+            }
+        }
+
+        function handleActionClick() {
+            if (currentStep === 'picked') {
+                currentStep = 'revealed';
+
+                const allDoors = document.querySelectorAll('.door');
+                allDoors.forEach(d => d.classList.remove('disabled'));
+
+                allDoors[hostRemovedIndex].classList.add('revealed', 'goat');
+                allDoors[hostRemovedIndex].innerText = '🐐';
+
+                updateChart('revealed');
+
+                document.getElementById('status').innerHTML =
+                    `Monty reveals a Goat behind <strong>Door ${doorAngles[hostRemovedIndex].letter}</strong>! 🐐<br>` +
+                    `Click a door to confirm: <strong>Stay with Door ${doorAngles[initialChoice].letter}</strong> or <strong>Switch</strong>?`;
+
+                document.getElementById('action-btn').style.display = 'none';
+
+            } else if (currentStep === 'end') {
+                initGame();
+            }
+        }
+
+        function finalizeGame(index) {
+            currentStep = 'end';
+            gameOver = true;
+            switchedMind = (index !== initialChoice);
+
+            const allDoors = document.querySelectorAll('.door');
+            allDoors.forEach((d, i) => {
+                d.classList.remove('selected', 'disabled');
+                d.classList.add('revealed');
+                if (goatPositions.includes(i)) {
+                    d.classList.add('goat');
+                    d.innerText = '🐐';
+                } else {
+                    d.classList.add('car');
+                    d.innerText = '🏎️';
+                }
+            });
+
+            const result = goatPositions.includes(index) ? "Loss" : "Win";
+            document.getElementById('status').innerHTML =
+                result === "Win" ? "🎉 <strong>You got the Car!</strong> Switching won the prize!" : "BAHHH! 🐐 <strong>You got a Goat!</strong>";
+
+            updateChart('end');
+
+            const btn = document.getElementById('action-btn');
+            btn.innerText = "Play Again";
+            btn.className = "btn secondary";
+            btn.style.display = 'inline-block';
+
+            fetch('/save_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    result: result,
+                    board_layout: boardLayout,
+                    initial_choice_index: initialChoice,
+                    switched_mind: switchedMind
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const logList = document.getElementById('log-list');
+                const newEntry = document.createElement('div');
+                newEntry.classList.add('log-entry');
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                newEntry.innerHTML = `
+                    <div class="log-top-row">
+                        <span class="log-id">#${data.game_id}</span>
+                        <span class="badge ${result}">${result}</span>
+                    </div>
+                    <div>${time}</div>
+                    <div class="log-meta">Switched: ${switchedMind ? 'Yes' : 'No'} | Layout: ${boardLayout.join(', ')}</div>`;
+                logList.prepend(newEntry);
+            })
+            .catch(err => console.error("Error saving game:", err));
+        }
+
+        function deleteHistory() {
+            if (!confirm("Are you sure you want to delete all game history?")) return;
+
+            fetch('/delete_history', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('log-list').innerHTML = '';
+                })
+                .catch(err => console.error("Error deleting history:", err));
+        }
+
+        initGame();
+    </script>
+</body>
+
+</html>
