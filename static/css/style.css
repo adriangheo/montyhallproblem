@@ -514,10 +514,13 @@ button:active {
     color: #0f1117;
 }
 
-/* Phone-only settings button that opens a menu to swap the right column
-   between the chart and history; hidden until the phone breakpoint below. */
+/* Settings button (top-right, all screen sizes) opens a menu with
+   view options (phone only, see below) and the language picker. */
 #mobile-panel-menu-wrap {
-    display: none;
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 25;
 }
 
 .corner-btn {
@@ -535,6 +538,70 @@ button:active {
 .corner-btn.active {
     color: var(--gold);
     border-color: var(--gold);
+}
+
+#mobile-panel-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 200px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-raised);
+}
+
+#mobile-panel-menu[hidden] {
+    display: none;
+}
+
+.menu-section-label {
+    padding: 8px 14px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.menu-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--border-subtle);
+}
+
+.menu-item {
+    width: 100%;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    box-shadow: none;
+    text-align: left;
+    font-size: 0.82rem;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.menu-item.active {
+    color: var(--gold);
+}
+
+/* The "View" section only affects the phone split-view layout, so it's
+   hidden everywhere else — the language picker stays available always. */
+@media (min-width: 601px) {
+
+    .view-section,
+    #mobile-panel-menu .menu-divider {
+        display: none;
+    }
 }
 
 /* --- Pie chart specific styles (scoped to #chart-sidebar) --- */
@@ -672,54 +739,6 @@ button:active {
 
     button {
         width: 100%;
-    }
-
-    /* Single settings button (top-right) opens a menu to swap the
-       right column between chart and history */
-    #mobile-panel-menu-wrap {
-        display: block;
-        position: fixed;
-        top: 8px;
-        right: 8px;
-        z-index: 25;
-    }
-
-    #mobile-panel-menu {
-        position: absolute;
-        top: calc(100% + 6px);
-        right: 0;
-        min-width: 190px;
-        display: flex;
-        flex-direction: column;
-        background: var(--bg-card);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-raised);
-        overflow: hidden;
-    }
-
-    #mobile-panel-menu[hidden] {
-        display: none;
-    }
-
-    .menu-item {
-        width: 100%;
-        margin: 0;
-        padding: 10px 14px;
-        border-radius: 0;
-        background: transparent;
-        color: var(--text-secondary);
-        box-shadow: none;
-        text-align: left;
-        font-size: 0.82rem;
-    }
-
-    .menu-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-    }
-
-    .menu-item.active {
-        color: var(--gold);
     }
 
     /* Condensed history entries: id + result only, until hover/long-press */

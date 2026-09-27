@@ -10,18 +10,36 @@
 
 <body>
 
-    <!-- Phone-only: one settings button opens a menu to swap the right column -->
+    <!-- Settings button: view options (phone) + language (all screens) -->
     <div id="mobile-panel-menu-wrap">
         <button type="button" class="corner-btn" id="mobile-panel-menu-btn" onclick="toggleMobileMenu()"
-            aria-haspopup="true" aria-expanded="false" aria-label="View options">⚙️</button>
+            aria-haspopup="true" aria-expanded="false" aria-label="Settings">⚙️</button>
         <div id="mobile-panel-menu" hidden>
-            <button type="button" class="menu-item" id="menu-item-chart" onclick="selectMobilePanel('chart')">📊 Probability Breakdown</button>
-            <button type="button" class="menu-item" id="menu-item-history" onclick="selectMobilePanel('history')">🕓 Game History</button>
+            <div class="menu-section view-section">
+                <div class="menu-section-label" id="menu-view-label">View</div>
+                <button type="button" class="menu-item" id="menu-item-chart" onclick="selectMobilePanel('chart')">📊 Probability Breakdown</button>
+                <button type="button" class="menu-item" id="menu-item-history" onclick="selectMobilePanel('history')">🕓 Game History</button>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-section lang-section">
+                <div class="menu-section-label" id="menu-lang-label">Language</div>
+                <button type="button" class="menu-item lang-item" data-lang="en" onclick="selectLanguage('en')">🇬🇧 English</button>
+                <button type="button" class="menu-item lang-item" data-lang="es" onclick="selectLanguage('es')">🇪🇸 Español</button>
+                <button type="button" class="menu-item lang-item" data-lang="fr" onclick="selectLanguage('fr')">🇫🇷 Français</button>
+                <button type="button" class="menu-item lang-item" data-lang="de" onclick="selectLanguage('de')">🇩🇪 Deutsch</button>
+                <button type="button" class="menu-item lang-item" data-lang="it" onclick="selectLanguage('it')">🇮🇹 Italiano</button>
+                <button type="button" class="menu-item lang-item" data-lang="pt" onclick="selectLanguage('pt')">🇵🇹 Português</button>
+                <button type="button" class="menu-item lang-item" data-lang="nl" onclick="selectLanguage('nl')">🇳🇱 Nederlands</button>
+                <button type="button" class="menu-item lang-item" data-lang="pl" onclick="selectLanguage('pl')">🇵🇱 Polski</button>
+                <button type="button" class="menu-item lang-item" data-lang="ro" onclick="selectLanguage('ro')">🇷🇴 Română</button>
+                <button type="button" class="menu-item lang-item" data-lang="el" onclick="selectLanguage('el')">🇬🇷 Ελληνικά</button>
+                <button type="button" class="menu-item lang-item" data-lang="sv" onclick="selectLanguage('sv')">🇸🇪 Svenska</button>
+            </div>
         </div>
     </div>
 
     <div id="chart-sidebar">
-        <h3>Probability Breakdown</h3>
+        <h3 id="chart-panel-title">Probability Breakdown</h3>
 
         <svg id="chart-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
             <!-- base -->
@@ -52,7 +70,7 @@
     </div>
 
     <div id="game-container">
-        <h2>The Monty Hall Problem</h2>
+        <h2 id="app-title">The Monty Hall Problem</h2>
 
         <div id="board-wrapper">
             <div id="grid"></div>
@@ -64,19 +82,19 @@
     </div>
 
     <div id="sidebar">
-        <h3>Game History</h3>
+        <h3 id="history-panel-title">Game History</h3>
         <div class="history-actions">
             <div class="segmented-switch" role="tablist" aria-label="History layout">
                 <button type="button" class="segment" id="seg-one-column" onclick="setHistoryView('combined')">1 Column</button>
                 <button type="button" class="segment" id="seg-two-column" onclick="setHistoryView('split')">2 Columns</button>
             </div>
-            <button class="btn-danger" onclick="deleteHistory()">
+            <button class="btn-danger" id="clear-history-btn" onclick="deleteHistory()">
                 Clear All History
             </button>
         </div>
         <div id="log-columns">
             <div class="log-column">
-                <h4>Kept Choice</h4>
+                <h4 id="kept-choice-header">Kept Choice</h4>
                 <div id="log-list-kept">
                     {% for game in kept_history %}
                     <div class="log-entry">
@@ -90,7 +108,7 @@
                 </div>
             </div>
             <div class="log-column">
-                <h4>Switched Choice</h4>
+                <h4 id="switched-choice-header">Switched Choice</h4>
                 <div id="log-list-switched">
                     {% for game in switched_history %}
                     <div class="log-entry">
