@@ -20,6 +20,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 You won the car!",
         statusLoss: "🐐 You got a goat. Better luck next time!",
         montyBtn: "Ask Monty to open a door",
+        montyBtnDetail: "",
         playAgainBtn: "Play Again",
         oneColumn: "1 Column",
         twoColumns: "2 Columns",
@@ -52,6 +53,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 ¡Ganaste el coche!",
         statusLoss: "🐐 Obtuviste una cabra. ¡Mejor suerte la próxima vez!",
         montyBtn: "Pedir a Monty que abra una puerta",
+        montyBtnDetail: "",
         playAgainBtn: "Jugar de Nuevo",
         oneColumn: "1 Columna",
         twoColumns: "2 Columnas",
@@ -84,6 +86,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Vous avez gagné la voiture !",
         statusLoss: "🐐 Vous avez eu une chèvre. Bonne chance la prochaine fois !",
         montyBtn: "Demander à Monty d'ouvrir une porte",
+        montyBtnDetail: "",
         playAgainBtn: "Rejouer",
         oneColumn: "1 Colonne",
         twoColumns: "2 Colonnes",
@@ -116,6 +119,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Du hast das Auto gewonnen!",
         statusLoss: "🐐 Du hast eine Ziege bekommen. Viel Glück beim nächsten Mal!",
         montyBtn: "Monty bitten, eine Tür zu öffnen",
+        montyBtnDetail: "",
         playAgainBtn: "Nochmal Spielen",
         oneColumn: "1 Spalte",
         twoColumns: "2 Spalten",
@@ -148,6 +152,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Hai vinto l'auto!",
         statusLoss: "🐐 Hai preso una capra. Buona fortuna per la prossima volta!",
         montyBtn: "Chiedi a Monty di aprire una porta",
+        montyBtnDetail: "",
         playAgainBtn: "Gioca Ancora",
         oneColumn: "1 Colonna",
         twoColumns: "2 Colonne",
@@ -180,6 +185,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Ganhou o carro!",
         statusLoss: "🐐 Calhou-lhe uma cabra. Mais sorte para a próxima!",
         montyBtn: "Pedir ao Monty para abrir uma porta",
+        montyBtnDetail: "",
         playAgainBtn: "Jogar Novamente",
         oneColumn: "1 Coluna",
         twoColumns: "2 Colunas",
@@ -212,6 +218,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Je hebt de auto gewonnen!",
         statusLoss: "🐐 Je kreeg een geit. Volgende keer meer geluk!",
         montyBtn: "Vraag Monty om een deur te openen",
+        montyBtnDetail: "",
         playAgainBtn: "Opnieuw Spelen",
         oneColumn: "1 Kolom",
         twoColumns: "2 Kolommen",
@@ -244,6 +251,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Wygrałeś samochód!",
         statusLoss: "🐐 Trafiła ci się koza. Powodzenia następnym razem!",
         montyBtn: "Poproś Monty'ego o otwarcie drzwi",
+        montyBtnDetail: "",
         playAgainBtn: "Zagraj Ponownie",
         oneColumn: "1 Kolumna",
         twoColumns: "2 Kolumny",
@@ -275,7 +283,8 @@ const TRANSLATIONS = {
         statusRevealed: "Monty a deschis o ușă și a dezvăluit o capră! Rămâi la {door} sau treci la cealaltă ușă neschisă?",
         statusWin: "🎉 Ai câștigat mașina!",
         statusLoss: "🐐 Ai primit o capră. Baftă mai multă data viitoare!",
-        montyBtn: "Roagă-l pe Monty să deschidă o ușă",
+        montyBtn: "Roagă-l pe Monty să deschidă o ușă*",
+        montyBtnDetail: "*una dintre celelalte două, nealese, și despre care știe cu siguranță că în spatele ei este o capră",
         playAgainBtn: "Joacă din Nou",
         oneColumn: "1 Coloană",
         twoColumns: "2 Coloane",
@@ -308,6 +317,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Κέρδισες το αυτοκίνητο!",
         statusLoss: "🐐 Πήρες μια κατσίκα. Καλύτερη τύχη την επόμενη φορά!",
         montyBtn: "Ζήτα από τον Monty να ανοίξει μια πόρτα",
+        montyBtnDetail: "",
         playAgainBtn: "Παίξε Ξανά",
         oneColumn: "1 Στήλη",
         twoColumns: "2 Στήλες",
@@ -340,6 +350,7 @@ const TRANSLATIONS = {
         statusWin: "🎉 Du vann bilen!",
         statusLoss: "🐐 Du fick en get. Bättre lycka nästa gång!",
         montyBtn: "Be Monty öppna en dörr",
+        montyBtnDetail: "",
         playAgainBtn: "Spela Igen",
         oneColumn: "1 Kolumn",
         twoColumns: "2 Kolumner",
@@ -626,6 +637,7 @@ function initGame() {
     awaitingHostReveal = false;
     document.getElementById('monty-btn').style.display = 'none';
     document.getElementById('play-again-btn').style.display = 'none';
+    syncMontyBtnDetail();
 
     // 4. Create the doors
     for (let i = 0; i < width; i++) {
@@ -678,6 +690,7 @@ function revealCell(cell, index) {
         currentPhase = 'chosen';
         applyPhaseText();
         document.getElementById('monty-btn').style.display = 'inline-block';
+        syncMontyBtnDetail();
 
     } else {
         // SECOND MOVE LOGIC
@@ -722,8 +735,17 @@ function hostOpensDoor() {
     applyPhaseText();
 
     document.getElementById('monty-btn').style.display = 'none';
+    syncMontyBtnDetail();
     awaitingHostReveal = false;
     pendingHostReveal = null;
+}
+
+// Shows the monty-btn-detail footnote only while the button itself is
+// visible and the current language actually has footnote text to show.
+function syncMontyBtnDetail() {
+    const btn = document.getElementById('monty-btn');
+    const detail = document.getElementById('monty-btn-detail');
+    detail.style.display = (btn.style.display === 'inline-block' && detail.textContent) ? 'block' : 'none';
 }
 
 function endGame(result) {
@@ -903,6 +925,8 @@ function applyStaticTranslations() {
     document.getElementById('chart-panel-title').textContent = tr('chartPanelTitle');
     document.getElementById('history-panel-title').textContent = tr('historyPanelTitle');
     document.getElementById('monty-btn').textContent = tr('montyBtn');
+    document.getElementById('monty-btn-detail').textContent = tr('montyBtnDetail');
+    syncMontyBtnDetail();
     document.getElementById('play-again-btn').textContent = tr('playAgainBtn');
     document.getElementById('seg-one-column').textContent = tr('oneColumn');
     document.getElementById('seg-two-column').textContent = tr('twoColumns');

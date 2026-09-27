@@ -450,6 +450,17 @@ button:active {
     box-shadow: 0 6px 20px rgba(245, 166, 35, 0.5);
 }
 
+/* Footnote for the asterisk in #monty-btn's label (e.g. Romanian); hidden when empty */
+.monty-btn-detail {
+    display: none;
+    max-width: 320px;
+    margin: 6px auto 0;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
 /* "Play Again" — a fresh teal, distinct from the gold "ask Monty" step */
 #play-again-btn {
     background: linear-gradient(180deg, #06d6a0 0%, #05a57b 100%);
