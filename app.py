@@ -1,19 +1,38 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import psycopg2
+import time
 from datetime import datetime
 import json
 
 app = Flask(__name__)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
+# Railway/Heroku provide postgres:// but psycopg2 requires postgresql://
+if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
-def init_db():
-    """Initializes the database with extended tracking columns."""
-    conn = get_connection()
+def init_db(max_retries=5, retry_delay=2):
+    """Initializes the database with extended tracking columns.
+
+    Retries the initial connection with backoff so a slow-starting Postgres
+    (e.g. on Railway during boot) doesn't crash the app on import.
+    """
+    conn = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            conn = get_connection()
+            break
+        except psycopg2.OperationalError as e:
+            if attempt == max_retries:
+                raise
+            print(f"Database connection failed (attempt {attempt}/{max_retries}): {e}. Retrying in {retry_delay}s...")
+            time.sleep(retry_delay)
+            retry_delay *= 2
+
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS game_history (
@@ -81,6 +100,19 @@ def delete_history():
     cursor.close()
     conn.close()
     return jsonify({"status": "success", "message": "History cleared!"})
+
+@app.route('/health')
+def health():
+    """Checks DB connectivity so uptime monitors catch real outages, not just app liveness."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1')
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "detail": str(e)}), 503
 
 init_db()
 
