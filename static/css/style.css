@@ -445,6 +445,7 @@ button:active {
     box-shadow: 0 4px 16px var(--gold-glow);
 }
 
+/* Hover state for the "Ask Monty to open a door" button */
 #monty-btn:hover {
     background: linear-gradient(180deg, #fcc05d 0%, #e68d03 100%);
     box-shadow: 0 6px 20px rgba(245, 166, 35, 0.5);
