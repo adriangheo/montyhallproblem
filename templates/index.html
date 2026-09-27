@@ -139,6 +139,11 @@
         </div>
     </div>
 
+    <script>
+        // Set by the /<lang> route (e.g. /ro) so a shared link forces that
+        // translation on load, overriding browser detection and localStorage.
+        window.FORCED_LANG = {{ lang|tojson }};
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 

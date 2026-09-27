@@ -375,7 +375,12 @@ function detectBrowserLang() {
     return TRANSLATIONS[nav] ? nav : 'en';
 }
 
-let currentLang = localStorage.getItem(LANG_KEY) || detectBrowserLang();
+// A /<lang> URL (e.g. /ro) forces that translation for this load, so a
+// shared link always opens in the intended language regardless of the
+// visitor's browser language or previously saved preference.
+let currentLang = (typeof window.FORCED_LANG === 'string' && TRANSLATIONS[window.FORCED_LANG])
+    ? window.FORCED_LANG
+    : localStorage.getItem(LANG_KEY) || detectBrowserLang();
 if (!TRANSLATIONS[currentLang]) currentLang = 'en';
 
 // Looks up a translated string for the current language, falling back to
@@ -959,6 +964,9 @@ function setLanguage(lang) {
     if (!TRANSLATIONS[lang] || lang === currentLang) return;
     currentLang = lang;
     localStorage.setItem(LANG_KEY, lang);
+    // Reflect the choice in the URL (e.g. /ro) without reloading, so the
+    // address bar can be copied and shared with that language pre-selected.
+    history.pushState(null, '', '/' + lang);
     applyStaticTranslations();
     applyPhaseText();
     updateLanguageMenuActiveState();

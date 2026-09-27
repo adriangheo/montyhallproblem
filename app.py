@@ -15,6 +15,9 @@ if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
+# Keep in sync with the language codes in static/js/script.js's TRANSLATIONS object.
+SUPPORTED_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ro', 'el', 'sv']
+
 def init_db(max_retries=5, retry_delay=2):
     """Initializes the database with extended tracking columns.
 
@@ -49,8 +52,7 @@ def init_db(max_retries=5, retry_delay=2):
             time.sleep(retry_delay)
             retry_delay *= 2
 
-@app.route('/')
-def index():
+def render_index(lang=None):
     conn = get_connection()
     cursor = conn.cursor()
     # Fetch previous game results, including switched_mind so the history can be split into columns
@@ -60,7 +62,16 @@ def index():
     conn.close()
     kept_history = [game for game in history if not game[3]]
     switched_history = [game for game in history if game[3]]
-    return render_template('index.html', kept_history=kept_history, switched_history=switched_history, all_history=history)
+    return render_template('index.html', kept_history=kept_history, switched_history=switched_history, all_history=history, lang=lang)
+
+@app.route('/')
+def index():
+    return render_index()
+
+# Per-language URLs (e.g. /ro, /fr) so a translated version can be shared directly.
+@app.route('/<any(' + ', '.join(SUPPORTED_LANGS) + '):lang>')
+def index_lang(lang):
+    return render_index(lang)
 
 @app.route('/save_game', methods=['POST'])
 
