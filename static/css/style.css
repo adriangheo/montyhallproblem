@@ -468,6 +468,7 @@ button:active {
     box-shadow: 0 4px 16px var(--teal-glow);
 }
 
+/* Hover state for the "Play Again" button */
 #play-again-btn:hover {
     box-shadow: 0 6px 20px rgba(6, 214, 160, 0.5);
 }
