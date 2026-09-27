@@ -106,7 +106,7 @@ The application automatically creates the `game_history` table in the PostgreSQL
 
 `DATABASE_URL` is normalized at startup so both `postgres://` and `postgresql://` prefixes work (Railway/Heroku provide the former, which `psycopg2` rejects). All routes obtain connections through a single `get_connection()` helper, so this normalization is applied consistently everywhere.
 
-Because table creation runs at import time (before the app starts serving requests), the initial connection retries with exponential backoff (5 attempts) if the database isn't reachable yet, so the app doesn't crash on boot during a slow-starting Postgres instance.
+Because table creation runs at import time (before the app starts serving requests), the connection and `CREATE TABLE` step both retry together with exponential backoff (5 attempts) if the database isn't reachable yet, so the app doesn't crash on boot during a slow-starting Postgres instance.
 
 A `/health` endpoint is available that runs a real `SELECT 1` query against the database, returning `200` if the DB is reachable and `503` otherwise — useful for uptime monitors and deployment health checks.
 
